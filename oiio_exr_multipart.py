@@ -15,21 +15,25 @@ aov_defs = {
     # AOV :  ["siname", (chnames), "bitdepth", si_index] 
     #  
 
-    # OCTANE
+    # GENERAL
     "AO" : ["AO", ("Y",), "half"],  
     "Beauty" : ["rgba", ("R", "G", "B", "A"), "half", 0],
+    "Noise" : ["noise", ("R", "G", "B", "A"), "half"],
+    "Z" : ["depth", ("Z"), "float", 1],
+    "Emit" : ["emission", ("R", "G", "B"), "half"],
+     
+    
+    # # OCTANE
     "LiDir" : ["light_direction", ("X", "Y", "Z"), "half"],
     "DeMain" : ["rgba_denoised", ("R", "G", "B", "A"), "half"],
     "Dif" : ["diffuse", ("R", "G", "B", "A"), "half"],
     "DifD" : ["diffuse_direct", ("R", "G", "B"), "half"],
     "DifF" : ["diffuse_filter", ("R", "G", "B"), "half"],
     "DifI" : ["diffuse_indirect", ("R", "G", "B"), "half"],
-    "Emit" : ["emitters", ("R", "G", "B"), "half"],
-    "GN" : ["geometric_normals", ("X", "Y", "Z"), "half"],
+    "GN" : ["geometric_normals", ("X", "Y", "Z"), "float"],
     "Irr" : ["irradiance", ("R", "G", "B"), "half"],
     "Main" : ["rgba", ("R", "G", "B", "A"), "half", 0],
     "MV" : ["motion", ("u", "v", "u", "v"), "float"],
-    "Noise" : ["noise", ("R", "G", "B", "A"), "half"],
     "Pos" : ["pos", ("X", "Y", "Z"), "float"],
     "Post" : ["post_process", ("R", "G", "B"), "half"],
     "Ref" : ["reflection", ("R", "G", "B"), "half"],
@@ -37,36 +41,55 @@ aov_defs = {
     "RefI" : ["reflection_indirect", ("R", "G", "B"), "half"],
     "RflF" : ["reflection_filter", ("R", "G", "B"), "half"],
     "Shdw" : ["shadow", ("R", "G", "B"), "half"],
-    "ShN" : ["shadow_normal", ("X", "Y", "Z"), "half"],
+    "ShN" : ["shadow_normal", ("X", "Y", "Z"), "float"],
     "Tang" : ["texture_tangent", ("X", "Y", "Z"), "half"],
-    "TN" : ["tangent_normal", ("X", "Y", "Z"), "half"],
-    "Z" : ["depth", ("Z"), "float", 1],
+    "TN" : ["tangent_normal", ("X", "Y", "Z"), "float"],
     "DeDifD" : ["diffuse_direct_denoised", ("R", "G", "B", "A"), "half"],
     "DeDifI" : ["diffuse_indirect_denoised", ("R", "G", "B", "A"), "half"],
     "DeRefD" : ["reflection_direct_denoised", ("R", "G", "B", "A"), "half"],
     "DeRefI" : ["reflection_indirect_denoised", ("R", "G", "B", "A"), "half"],
     "DeRem" : ["remainder_denoised", ("R", "G", "B", "A"), "half"],
+    "Volume" : ["volume", ("R", "G", "B"), "half"],
     
     
     # CYCLES
+    "Composite" : ["rgba", ("R", "G", "B", "A"), "half", 0],
     "rgba" : ["rgba", ("R", "G", "B", "A"), "half", 0],
-    "depth" : ["depth", ("Y",), "float", 1], 
-    "pos" : ["pos", ("X", "Y", "Z"), "float"],
-    "DifDir" : ["DifDir", ("R", "G", "B", "A"), "half"],
-    "DifInd" : ["DifInd", ("R", "G", "B", "A"), "half"],
-    "DifCol" : ["DifCol", ("R", "G", "B", "A"), "half"],
-    "GlossDir" : ["GlossDir", ("R", "G", "B", "A"), "half"],
-    "GlossInd" : ["GlossInd", ("R", "G", "B", "A"), "half"],
-    "GlossCol" : ["GlossCol", ("R", "G", "B", "A"), "half"],
-    "TransDir" : ["TransDir", ("R", "G", "B", "A"), "half"],
-    "TransInd" : ["TransInd", ("R", "G", "B", "A"), "half"],
-    "TransCol" : ["TransCol", ("R", "G", "B", "A"), "half"],
+    "Depth" : ["depth", ("Z",), "float", 1], 
+    "Position" : ["pos", ("X", "Y", "Z"), "float"],
+    "Normal" : ["normal", ("X", "Y", "Z"), "float"],
+    "DifDir" : ["DifDir", ("R", "G", "B"), "half"],
+    "DifInd" : ["DifInd", ("R", "G", "B"), "half"],
+    "DifCol" : ["DifCol", ("R", "G", "B"), "half"],
+    "GlossDir" : ["GlossDir", ("R", "G", "B"), "half"],
+    "GlossInd" : ["GlossInd", ("R", "G", "B"), "half"],
+    "GlossCol" : ["GlossCol", ("R", "G", "B"), "half"],
+    "TransDir" : ["TransDir", ("R", "G", "B"), "half"],
+    "TransInd" : ["TransInd", ("R", "G", "B"), "half"],
+    "TransCol" : ["TransCol", ("R", "G", "B"), "half"],
+    "VolumeDir" : ["VolumeDir", ("R", "G", "B"), "half"],
+    "VolumeCol" : ["VolumeCol", ("R", "G", "B"), "half"],
+    "Vector" : ["motion", ("X", "Y", "Z", "W"), "float"], 
+    "Shadow" : ["shadow", ("R", "G", "B"), "half"],
+    "ShadowCatcher" : ["ShadowCatcher", ("R", "G", "B"), "half"],
+    "UV" : ["UV", ("A", "U", "V"), "float"],
     
+    "Denoising Albedo" : ["Denoising Albedo", ("R", "G", "B"), "half"],
+    "Denoising Normal" : ["Denoising Normal", ("R", "G", "B"), "float"],
+    "Denoising Depth" : ["Denoising Depth", ("Z"), "float"],
+
+    "Mist" : ["mist", ("Z"), "float"],
+    
+    "Noisy Image" : ["Noisy Image", ("R", "G", "B"), "half"],
+    "Noisy Shadow Catcher" : ["Noisy Shadow Catcher", ("R", "G", "B"), "half"],
+
+
+
 }
 
 # FOR NOW, EXCLUDE CRYPTOMATTE LAYERS 
 # TO DO: Correctly merge Cryptomatte metadata 
-aov_exclude = ["cm-", "crypto", "Crypto"]
+aov_exclude = ["cm-Ii", "cm-Mn", "cm-On", "crypto", "Crypto", "Util", "Deep"]
 
 
 ############################
@@ -147,11 +170,11 @@ def get_framebase(default_framebase):
 def query_keep_files(default_keep_files):
     global keep_files
     keep_files = default_keep_files
-    while ( res:=input("Do you want to keep the original files? (y/n)").lower() ) not in {"y", "n"}: 
+    while ( r:=input("Keep original files? (y/n)").lower() ) not in {"y", "n"}: 
         pass
-    if res=='y':
+    if r=='y':
         keep_files=True
-    elif res=='n':
+    elif r=='n':
         keep_files=False
 
 
@@ -162,6 +185,10 @@ def copy_crypto(cryptos):
         dst_dir = str(dir_out) + str(c)
         print("Copying cryptomattes:" + str(c))
         shutil.copy(src_dir, dst_dir)
+    return
+
+def merge_crypto(cryptos):    
+    return
         
         
     '''
@@ -178,12 +205,16 @@ def copy_crypto(cryptos):
 
 
 def main():
-
+    
     get_inputs("./in/")
     get_outputs("./out/")
     get_framebase(1001)
-    
-    files = os.listdir(dir_in)
+        
+    files = []
+
+    for f in os.listdir("./in/"):
+        if not f.startswith('.'):
+            files.append(f)
 
     query_keep_files(True)
     
@@ -219,15 +250,19 @@ def main():
             aov = file.split(".")[-3]
             
             # Print error message if AOV not defined in aov_defs
-            if not aov_defs.get(aov):  
-                print("Channel >>", aov, "<< not defined. Check for correct entries in aov_defs") 
+            if not aov_defs.get(aov):
+                if not aov in aov_exclude:
+                    print("Channel >>", aov, "<< not defined. Check for correct entries in aov_defs") 
             
             # Exclude Cryptomattes
             elif bool([e for e in aov_exclude if(e in aov)]) == False :
+             
                 img = dir_in + file
                 img_all.append(img)
-                            
+
                 buf = ImageBuf(img)
+
+
                            
                 chnames = construct_channelnames(aov)
                 chnames = tuple(chnames)
@@ -248,6 +283,7 @@ def main():
                     index_offset+=1
                     si_index = index_offset
                 finally :
+                    buf_sorted.insert(si_index, buf)
                     specs_sorted.insert(si_index, spec)
 
 
@@ -258,6 +294,7 @@ def main():
         # EXPORT MULTIPART FILE
         output_multipart(out_filename, specs_sorted, buf_sorted)
     
+
     copy_crypto(files)
 
     if keep_files == False :
@@ -278,23 +315,3 @@ if __name__ == "__main__" :
     main()
     #debug_export_si_order("./out/Intro_shot01_preview_v3.1001.exr")
     sys.exit()
-
-
-
-
-'''
-GENERAL TO DOs: 
-
-
-- add Blender channelist
-- handle Cryptomattes?
-
-- add Multichannel Support: 
-    - split channelgroups to ImageBufs
-    - Blender: Split ViewLayers?
-    - rename, sort
-
-- Blender shuffle pos Y/Z ?
-
-
-'''
