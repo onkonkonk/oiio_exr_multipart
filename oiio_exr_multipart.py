@@ -50,8 +50,7 @@ aov_defs = {
     "DeRefI" : ["reflection_indirect_denoised", ("R", "G", "B", "A"), "half"],
     "DeRem" : ["remainder_denoised", ("R", "G", "B", "A"), "half"],
     "Volume" : ["volume", ("R", "G", "B"), "half"],
-    
-    
+
     # CYCLES
     "Composite" : ["rgba", ("R", "G", "B", "A"), "half", 0],
     "rgba" : ["rgba", ("R", "G", "B", "A"), "half", 0],
@@ -87,16 +86,12 @@ aov_defs = {
 
 }
 
-# FOR NOW, EXCLUDE CRYPTOMATTE LAYERS 
-# TO DO: Correctly merge Cryptomatte metadata 
-aov_exclude = ["cm-Ii", "cm-Mn", "cm-On", "crypto", "Crypto", "Util", "Deep"]
+# Extra AOVs will simply be copied to output dir
+aov_extras = ["cm-Ii", "cm-On", "cm-Mn", "crypto", "Crypto", "Util", "Deep"]
+
 
 
 ############################
-
-
-
-
 
 
 def construct_channelnames(aov_name):
@@ -113,7 +108,7 @@ def output_multipart(file, specs, bufs):
     out.open(file, specs)
     # Write subimages to output file    
     for s in range(len(bufs)):
-        print("Writing channels", bufs[s].spec().channelnames)
+        print("Writing channels:", bufs[s].spec().channelnames)
         if s > 0:
             out.open(file, specs[s], "AppendSubimage")
         bufs[s].write(out)
@@ -178,31 +173,19 @@ def query_keep_files(default_keep_files):
         keep_files=False
 
 
-def copy_crypto(cryptos):    
-    cryptomattes = [s for s in cryptos if any(xs in s for xs in aov_exclude)]
-    for c in cryptomattes:
+def copy_extras(extras):    
+    extra_aov = [s for s in extras if any(xs in s for xs in aov_extras)]
+    for c in extra_aov:
         src_dir = str(dir_in) + str(c)
         dst_dir = str(dir_out) + str(c)
-        print("Copying cryptomattes:" + str(c))
+        print("Copying extras: " + str(c))
         shutil.copy(src_dir, dst_dir)
     return
 
 def merge_crypto(cryptos):    
     return
-        
-        
-    '''
-    # Get Cryptomatte attribs
-    for i in range(len(spec.extra_attribs)) :
-        if "cryptomatte" in spec.extra_attribs[i].name:
-            print(spec.extra_attribs[i].name)
-    '''
 
 ###################################
-
-
-
-
 
 def main():
     
@@ -251,23 +234,20 @@ def main():
             
             # Print error message if AOV not defined in aov_defs
             if not aov_defs.get(aov):
-                if not aov in aov_exclude:
+                if not aov in aov_extras:
                     print("Channel >>", aov, "<< not defined. Check for correct entries in aov_defs") 
             
-            # Exclude Cryptomattes
-            elif bool([e for e in aov_exclude if(e in aov)]) == False :
-             
+            # Exclude extras
+            elif bool([e for e in aov_extras if(e in aov)]) == False :
                 img = dir_in + file
                 img_all.append(img)
 
                 buf = ImageBuf(img)
-
-
-                           
+     
                 chnames = construct_channelnames(aov)
                 chnames = tuple(chnames)
                 buf = ImageBufAlgo.channels(buf, channel_index[len(aov_defs[aov][1]) -1], chnames)
-
+                
                 # Convert bit depth for half float aovs
                 if aov_defs[aov][2] == "half":
                     buf = ImageBufAlgo.copy(buf, convert="half")
@@ -293,9 +273,10 @@ def main():
 
         # EXPORT MULTIPART FILE
         output_multipart(out_filename, specs_sorted, buf_sorted)
+        
     
 
-    copy_crypto(files)
+    copy_extras(files)
 
     if keep_files == False :
         delete_originals(files)
