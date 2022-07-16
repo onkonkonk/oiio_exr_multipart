@@ -10,6 +10,7 @@ from unicodedata import name
 from OpenImageIO import ImageOutput, ImageBuf, ImageBufAlgo
 
 
+
 aov_defs = {
     # 
     # "AOV" :  ["siname", (chnames), "bitdepth", si_index] 
@@ -120,8 +121,9 @@ def output_multipart(file, specs, bufs):
 
     print("\nWriting to file", file, "\n")
     # Create new output file and open
-    if not exists(os.path.dirname(file)) : 
-            os.mkdir(os.path.dirname(file))
+    dst = os.path.dirname(file)
+    if not exists(dst) : 
+            os.makedirs(dst)
     
     out = ImageOutput.create(file)
     out.open(file, specs)
@@ -201,16 +203,8 @@ def copy_extras(extras):
         dst_dir = str(dir_out) + os.path.relpath(os.path.join(c), os.path.join(dir_in))
         print("\nCopying extras: " + str(c))
         if not exists(os.path.dirname(dst_dir)) : 
-            os.mkdir(os.path.dirname(dst_dir))
+            os.makedirs(os.path.dirname(dst_dir))
         shutil.copy(src_dir, dst_dir)
-
-
-def debug_export_si_order(file):
-    si = ImageBuf(file).nsubimages
-    for i in range(si) : 
-        print("SubImage " + str(i) + ": " + str(ImageBuf(file, i, 0).spec().channelnames))
-    print("\nZ-Channel: " + str(ImageBuf(file).spec().z_channel))
-    print("Alpha Channel: " + str(ImageBuf(file).spec().alpha_channel) + "\n")
 
 def parse_filename(n) :
         return lambda a: a.split(".")[n]
@@ -218,7 +212,7 @@ def parse_filename(n) :
 ###################################
 
 def main():
-    
+    os.chdir(os.getcwd())
     '''
     
     INPUT HANDLING
@@ -232,23 +226,13 @@ def main():
     get_outputs("./out/")
     query_delete_files()
         
-    files2 = []
-
-    for f in os.listdir(dir_in):
-        if not f.startswith('.') and not f.startswith('_'):
-            files2.append(f)
-
-
-
     parse_filetype = parse_filename(-1)
     parse_frame = parse_filename(-2)
     parse_aov = parse_filename(-3)
     parse_basename = parse_filename(-4)
 
     files = []
-    
-    dirs = []
-    root = []
+
     for r, d, f in os.walk(dir_in):
         for q in range(len(f)) :
             if not f[q].startswith('.') and not f[q].startswith('_') :
