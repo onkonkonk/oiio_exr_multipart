@@ -101,7 +101,7 @@ aov_defs = {
 }
 
 # Extra AOVs will simply be copied to output dir
-aov_extras = ["cm-Ii", "cm-On", "cm-Mn", "cm-Mnn", "cm-UID", "crypto", "Crypto", "Util", "Deep"]
+aov_extras = ["cm-Ii", "cm-On", "cm-Mn", "cm-Mnn", "cm-UID", "crypto", "Crypto", "Util", "util", "Deep"]
 
 
 
@@ -338,9 +338,8 @@ def main():
                             specs_beauty_sorted.insert(si_index, spec)
 
                 elif bool([e for e in aov_extras if(e in aov)]) == True : 
-                    
-                    pass
-                    #copy_extras(current_files) 
+                                        
+                    copy_extras(current_files) 
 
             # Convert lists to tuples, as ImageOutput expects tuples
             buf_beauty, specs_beauty, buf_beauty_sorted = tuple(buf_beauty), tuple(specs_beauty), tuple(buf_beauty_sorted)
@@ -360,7 +359,7 @@ def main():
 
     '''
 
-    copy_extras(files)
+    
     delete_originals(files)
     
 
