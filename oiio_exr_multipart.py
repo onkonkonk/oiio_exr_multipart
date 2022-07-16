@@ -4,12 +4,9 @@ from genericpath import exists
 import os
 import shutil
 import sys
-import subprocess
-import pathlib
 from itertools import groupby
 from unicodedata import name
 
-import OpenImageIO as oiio
 from OpenImageIO import ImageOutput, ImageBuf, ImageBufAlgo
 
 
@@ -372,9 +369,9 @@ def main():
 
     '''
     
-    FILE HANDLING
+    ADDITIONAL FILE HANDLING
 
-    Simply copy extra files to output destination
+    Simply copy extra files to output destination if defined in extra_aovs
     Delete original files if specified
 
     '''
