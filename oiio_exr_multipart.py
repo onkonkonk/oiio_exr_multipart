@@ -212,7 +212,7 @@ def copy_extras(extras):
     for c in extra_aov:
         src_dir = str(c)
         dst_dir = str(dir_out) + os.path.relpath(os.path.join(c), os.path.join(dir_in))
-        print("Copying extras: " + str(c))
+        #print("Copying extras: " + str(c))
         if not exists(os.path.dirname(dst_dir)) : 
             os.makedirs(os.path.dirname(dst_dir))
         shutil.copy(src_dir, dst_dir)
@@ -259,8 +259,10 @@ def data_merge(cdata) :
         
             # Print error message if AOV not defined in aov_defs
             if not aov_defs.get(aov) and not aov in aov_extras:
-                    print(aov, ": Channel not defined. Undefined channels will be ignored!")
-                    input("Press any key to continue or Ctrl+C to exit")
+                    
+                    print(f"ERROR: Channel not defined: --- {aov} --- Undefined channels will be ignored!")
+                    pass 
+                    #input("Press any key to continue or Ctrl+C to exit")
             
             elif bool([e for e in aov_extras if(e in aov)]) == False :
                 
@@ -370,18 +372,8 @@ def main():
         frame_group = [list(i) for j, i in groupby(sort_by_frame, parse_frame)]
         frame_groups.append(frame_group)
     
-    
-    '''
-    DATA MERGE
 
-    Merges AOVs from Single Channel EXRs to Multipart EXRs as defined in aov_defs
-    Outputs multipars EXRs to < project.beauty.####.exr >,< project.data.####.exr >, ...
-    
-    '''
-        
-    
-
-
+    #multiprocessing data_merge()  
     processes = [multiprocessing.Process(target=data_merge, args=[cdata]) 
                     for cdata in frame_groups]
 
@@ -392,18 +384,8 @@ def main():
     # wait for completion
     for process in processes:
         process.join()
-
+       
         
-        
-    '''    
-
-    ADDITIONAL FILE HANDLING
-
-    - Delete original files if specified
-
-
-    '''
-
 
     delete_originals(files)
 
