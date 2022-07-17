@@ -1,11 +1,13 @@
 #!/usr/bin/python
  
 from genericpath import exists
+import multiprocessing
+
 import os
 import shutil
 import sys
+from time import perf_counter
 from itertools import groupby
-from unicodedata import name
 
 from OpenImageIO import ImageOutput, ImageBuf, ImageBufAlgo
 
@@ -13,7 +15,7 @@ from OpenImageIO import ImageOutput, ImageBuf, ImageBufAlgo
 
 aov_defs = {
     # 
-    # "AOV" :  ["siname", (chnames), "bitdepth", si_index] 
+    # "AOV" :  ["siname", (chnames), "bitdepth", "image-type", si_index] 
     #  
 
     # GENERAL
@@ -56,12 +58,21 @@ aov_defs = {
     "DeVol" : ["volume_denoised", ("R", "G", "B",), "half", ""],
     "volume" : ["volume", ("R", "G", "B"), "half", ""],
     "Vol" : ["volume", ("R", "G", "B"), "half", ""],   
-    "VolZFr" : ["volume_depth", ("Y",), "float", "data"],
+    "VolZFr" : ["volume_depth_forward", ("Y",), "float", "data"],
+    "VolZBk" : ["volume_depth_backward", ("Y",), "float", "data"],
+
     "DeVolE" : ["volume_emission_denoised", ("R", "G", "B",), "half", "data"],
 
     "Post" : ["post", ("R", "G", "B", "A"), "half", ""],
 
+    "Li1" : ["light1", ("R", "G", "B"), "half", ""],
     "Li2" : ["light2", ("R", "G", "B"), "half", ""],
+    "Li3" : ["light3", ("R", "G", "B"), "half", ""],
+    "Li4" : ["light4", ("R", "G", "B"), "half", ""],
+    "Li5" : ["light5", ("R", "G", "B"), "half", ""],
+    "Li6" : ["light6", ("R", "G", "B"), "half", ""],
+    "Li7" : ["light7", ("R", "G", "B"), "half", ""],
+    "Li8" : ["light8", ("R", "G", "B"), "half", ""],
 
 
 
@@ -118,8 +129,7 @@ def construct_channelnames(aov_name):
 
 def output_multipart(file, specs, bufs):
     
-
-    print("\nWriting to file", file, "\n")
+    #print("\nWriting to file", file, "\n")
     # Create new output file and open
     dst = os.path.dirname(file)
     if not exists(dst) : 
@@ -130,11 +140,12 @@ def output_multipart(file, specs, bufs):
 
     # Write subimages to output file      
     for s in range(len(bufs)):
-        print("Writing channels:", bufs[s].spec().channelnames)
+        #print("Writing channels:", bufs[s].spec().channelnames)
         if s > 0:
             out.open(file, specs[s], "AppendSubimage")
         bufs[s].write(out)
     out.close()
+    print(f"Data merge complete: {file}.")
     
 
 def query_delete_files():
@@ -201,17 +212,118 @@ def copy_extras(extras):
     for c in extra_aov:
         src_dir = str(c)
         dst_dir = str(dir_out) + os.path.relpath(os.path.join(c), os.path.join(dir_in))
-        print("\nCopying extras: " + str(c))
+        print("Copying extras: " + str(c))
         if not exists(os.path.dirname(dst_dir)) : 
             os.makedirs(os.path.dirname(dst_dir))
         shutil.copy(src_dir, dst_dir)
 
 def parse_filename(n) :
         return lambda a: a.split(".")[n]
+
+def data_merge(cdata) :
+    parse_filetype = parse_filename(-1)
+    parse_frame = parse_filename(-2)
+    parse_aov = parse_filename(-3)
+    parse_basename = parse_filename(-4)
+
+    basename = parse_basename(os.path.relpath(cdata[0][0], os.path.abspath(dir_in)))
+    filetype = parse_filetype(cdata[0][0])
+
+    
+    # LOOP OVER ALL FRAMES
+    for v in range(len(cdata)):
+        index_offset = 1
+        
+        current_files = cdata[v]
+
+        frame =  parse_frame(current_files[0])
+        file_out_beauty = dir_out + basename + ".beauty." + frame + "." + filetype
+        file_out_data = dir_out + basename + ".data." + frame + "." + filetype
+        
+
+
+        
+
+        
+        # Initialize empty lists to hold subimage infos
+        buf_beauty, specs_beauty, img_all = [], [], [] 
+        buf_beauty_sorted, specs_beauty_sorted = [], []
+        buf_data, specs_data = [], []
+        channel_index = [(0,), (0, 1), (0, 1, 2), (0, 1, 2, 3)]
+
+        
+        #Interate for all AOVs
+        for file in current_files : 
+            aov = parse_aov(file)
+        
+        
+            # Print error message if AOV not defined in aov_defs
+            if not aov_defs.get(aov) and not aov in aov_extras:
+                    print(aov, ": Channel not defined. Undefined channels will be ignored!")
+                    input("Press any key to continue or Ctrl+C to exit")
+            
+            elif bool([e for e in aov_extras if(e in aov)]) == False :
+                
+                aov_params =  aov_defs[aov]
+                
+                # Create ImageBuf for current AOV
+                img = file
+                buf = ImageBuf(img)
+    
+                chnames = construct_channelnames(aov)
+                chnames = tuple(chnames)
+                
+                buf = ImageBufAlgo.channels(buf, channel_index[len(aov_params[1])-1], chnames)
+                
+                # Convert bit depth as defined in aov_defs
+                if aov_params[2] == "half":
+                    buf = ImageBufAlgo.copy(buf, convert="half")
+
+                
+                # Add ImageBuf and ImageSpec to their respective lists for "data" and "beauty" passes
+                if aov_params[3] == "data":
+                    buf_data.append(buf)   
+                    spec = buf.spec()
+                    specs_data.append(spec)
+
+                else:
+                    buf_beauty.append(buf)   
+                    spec = buf.spec()
+                    specs_beauty.append(spec)
+                    try : 
+                        si_index = aov_params[4]
+                    except : 
+                        index_offset+=1
+                        si_index = index_offset
+                    finally :
+                        buf_beauty_sorted.insert(si_index, buf)
+                        specs_beauty_sorted.insert(si_index, spec)
+
+            elif bool([e for e in aov_extras if(e in aov)]) == True : 
+                                    
+                #pass 
+                copy_extras(current_files) 
+
+        # Convert lists to tuples, as ImageOutput expects tuples
+        buf_beauty, specs_beauty, buf_beauty_sorted = tuple(buf_beauty), tuple(specs_beauty), tuple(buf_beauty_sorted)
+        buf_data, specs_data = tuple(buf_data), tuple(specs_data)
+
+        #print(file_out_beauty)
+        #print(file_out_data)
+        output_multipart(file_out_beauty, specs_beauty_sorted, buf_beauty_sorted)
+        output_multipart(file_out_data, specs_data, buf_data)
+
+        
+
+
+
+
     
 ###################################
 
 def main():
+    start = perf_counter()
+
     os.chdir(os.getcwd())
     '''
     
@@ -231,15 +343,19 @@ def main():
     parse_aov = parse_filename(-3)
     parse_basename = parse_filename(-4)
 
+    exclude = set(['_', '.'])
+
     files = []
 
-    for r, d, f in os.walk(dir_in):
+    for r, d, f in os.walk(dir_in, topdown=True) :
+        d[:] = [s for s in d if s[:1] not in exclude ]
+        
         for q in range(len(f)) :
-            if not f[q].startswith('.') and not f[q].startswith('_') :
+            if f[q][:1] not in exclude :
                 file = os.path.join(r, f[q])
+                #print(file)
                 files.append(file)
-
-
+    
 
 
     # Create cascading lists by filename and framenumber
@@ -262,105 +378,38 @@ def main():
     Outputs multipars EXRs to < project.beauty.####.exr >,< project.data.####.exr >, ...
     
     '''
-    
-    # LOOP OVER ALL FILENAMES
-    for f in range(len(frame_groups)) : 
         
-        basename = parse_basename(os.path.relpath(frame_groups[f][0][0], os.path.abspath(dir_in)))
-        filetype = parse_filetype(frame_groups[f][0][0])
-
-
-        # LOOP OVER ALL FRAMES
-        for v in range(len(frame_groups[f])):
-            index_offset = 1
-            
-            current_files = frame_groups[f][v]
-
-            frame =  parse_frame(current_files[0])
-            file_out_beauty = dir_out + basename + ".beauty." + frame + "." + filetype
-            file_out_data = dir_out + basename + ".data." + frame + "." + filetype
-
-            print("\nPreparing frame", frame)
-
-            
-            # Initialize empty lists to hold subimage infos
-            buf_beauty, specs_beauty, img_all = [], [], [] 
-            buf_beauty_sorted, specs_beauty_sorted = [], []
-            buf_data, specs_data = [], []
-            channel_index = [(0,), (0, 1), (0, 1, 2), (0, 1, 2, 3)]
-
-            
-            #Interate for all AOVs
-            for file in current_files : 
-                aov = parse_aov(file)
-            
-            
-                # Print error message if AOV not defined in aov_defs
-                if not aov_defs.get(aov) and not aov in aov_extras:
-                        print(aov, ": Channel not defined. Undefined channels will be ignored!")
-                        input("Press any key to continue or Ctrl+C to exit")
-                
-                elif bool([e for e in aov_extras if(e in aov)]) == False :
-                    
-                    aov_params =  aov_defs[aov]
-                    
-                    # Create ImageBuf for current AOV
-                    img = file
-                    buf = ImageBuf(img)
-        
-                    chnames = construct_channelnames(aov)
-                    chnames = tuple(chnames)
-                    
-                    buf = ImageBufAlgo.channels(buf, channel_index[len(aov_params[1])-1], chnames)
-                    
-                    # Convert bit depth as defined in aov_defs
-                    if aov_params[2] == "half":
-                        buf = ImageBufAlgo.copy(buf, convert="half")
-
-                    
-                    # Add ImageBuf and ImageSpec to their respective lists for "data" and "beauty" passes
-                    if aov_params[3] == "data":
-                        buf_data.append(buf)   
-                        spec = buf.spec()
-                        specs_data.append(spec)
-
-                    else:
-                        buf_beauty.append(buf)   
-                        spec = buf.spec()
-                        specs_beauty.append(spec)
-                        try : 
-                            si_index = aov_params[4]
-                        except : 
-                            index_offset+=1
-                            si_index = index_offset
-                        finally :
-                            buf_beauty_sorted.insert(si_index, buf)
-                            specs_beauty_sorted.insert(si_index, spec)
-
-                elif bool([e for e in aov_extras if(e in aov)]) == True : 
-                                        
-                    copy_extras(current_files) 
-
-            # Convert lists to tuples, as ImageOutput expects tuples
-            buf_beauty, specs_beauty, buf_beauty_sorted = tuple(buf_beauty), tuple(specs_beauty), tuple(buf_beauty_sorted)
-            buf_data, specs_data = tuple(buf_data), tuple(specs_data)
-
-            output_multipart(file_out_beauty, specs_beauty_sorted, buf_beauty_sorted)
-            output_multipart(file_out_data, specs_data, buf_data)
-
-            
-
-    '''
     
+
+
+    processes = [multiprocessing.Process(target=data_merge, args=[cdata]) 
+                    for cdata in frame_groups]
+
+    # start the processes
+    for process in processes:
+        process.start()
+
+    # wait for completion
+    for process in processes:
+        process.join()
+
+        
+        
+    '''    
+
     ADDITIONAL FILE HANDLING
 
-    Simply copy extra files to output destination if defined in extra_aovs
-    Delete original files if specified
+    - Delete original files if specified
+
 
     '''
 
-    
+
     delete_originals(files)
+
+    finish = perf_counter()
+
+    print(f"Converted {len(files)} files in {finish-start:.2f} second(s).")
     
 
 
@@ -368,4 +417,5 @@ def main():
 if __name__ == "__main__" :
 
     main()
+    
     sys.exit()
